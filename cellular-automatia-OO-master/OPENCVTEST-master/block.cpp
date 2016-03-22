@@ -5,6 +5,33 @@ block::block()
    setDead();
 }
 
+bool block::isFishOfBreedingAge(void){
+    if(isFish ==true){
+        if(breedingAge>=2){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
+    else{
+        return false;
+    }
+}
+bool block::isSharkOfBreedingAge(void){
+  if(isShark == true){
+        if(breedingAge>=3){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+    else {
+        return false;
+    }
+}
 
 void block::setFish(void){
     blockType = 1;
@@ -15,7 +42,7 @@ void block::setFish(void){
     breedingAge = 2;
     deathAge = 10;
     randomDeathProbability = 1/32;
-    blockColour = cv::Vec3b(100,0,0);
+    blockColour = cv::Vec3b(200,124,130);
 
 }
 
@@ -28,7 +55,7 @@ void block::setShark(void){
     breedingAge = 2;
     deathAge = 10;
     randomDeathProbability = 0;
-    blockColour = cv::Vec3b(0,0,100);
+    blockColour = cv::Vec3b(100,0,100);
 
 }
 
@@ -41,7 +68,7 @@ void block::setDead(void){
     breedingAge = 0;
     deathAge = 0;
     randomDeathProbability = 0;
-    blockColour = cv::Vec3b(0,0,0);
+    blockColour = cv::Vec3b(98,190,200);
 
 }
 

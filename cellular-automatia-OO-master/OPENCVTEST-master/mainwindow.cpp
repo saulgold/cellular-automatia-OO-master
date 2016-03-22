@@ -29,7 +29,7 @@ cv::Scalar pixelScalar;
 
 //}
 cv::Mat frame, frame2;
-int const mapSize = 50;
+int const mapSize = 100;
 int array[mapSize][mapSize];
 block blockArray[mapSize][mapSize];
 
@@ -77,6 +77,8 @@ MainWindow::~MainWindow()
 }
 void MainWindow::updateGUI(){
 
+ui->textEdit->setText(QString::number(numberOfFish));
+ui->textEdit_2->setText(QString::number(numberOfSharks));
     //set ghoast array to current array
 
     for (int i = 0; i < mapSize; ++i){
@@ -166,21 +168,31 @@ void MainWindow::updateGUI(){
 
     //apply rules
     int neighbours;
-    int sharkNeighbours, fishNeighbours;
+    int sharkNeighbours, fishNeighbours,fishOfBreedingAge,sharksOfBreedingAge;
+
       for (int i = mapSize; i <2*mapSize; ++i){
         for (int j = mapSize; j <2*mapSize; ++j){
             neighbours = ghostArray[i + 1][j] + ghostArray[i][j + 1] + ghostArray[i + 1][j + 1] + ghostArray[i - 1][j - 1] + ghostArray[i - 1][j] + ghostArray[i][j - 1] + ghostArray[i + 1][j - 1]+ghostArray[i-1][j + 1];
             sharkNeighbours =  blockGhostArray[i + 1][j].isShark + blockGhostArray[i][j + 1].isShark + blockGhostArray[i + 1][j + 1].isShark + blockGhostArray[i - 1][j - 1].isShark + blockGhostArray[i - 1][j].isShark + blockGhostArray[i][j - 1].isShark + blockGhostArray[i + 1][j - 1].isShark+blockGhostArray[i-1][j + 1].isShark;
             fishNeighbours =  blockGhostArray[i + 1][j].isFish + blockGhostArray[i][j + 1].isFish + blockGhostArray[i + 1][j + 1].isFish + blockGhostArray[i - 1][j - 1].isFish + blockGhostArray[i - 1][j].isFish + blockGhostArray[i][j - 1].isFish + blockGhostArray[i + 1][j - 1].isFish+blockGhostArray[i-1][j + 1].isFish;
+            fishOfBreedingAge = blockGhostArray[i + 1][j].isFishOfBreedingAge() + blockGhostArray[i][j + 1].isFishOfBreedingAge() + blockGhostArray[i + 1][j + 1].isFishOfBreedingAge() + blockGhostArray[i - 1][j - 1].isFishOfBreedingAge() + blockGhostArray[i - 1][j].isFishOfBreedingAge() + blockGhostArray[i][j - 1].isFishOfBreedingAge() + blockGhostArray[i + 1][j - 1].isFishOfBreedingAge()+blockGhostArray[i-1][j + 1].isFishOfBreedingAge();
+           sharksOfBreedingAge =  blockGhostArray[i + 1][j].isSharkOfBreedingAge() + blockGhostArray[i][j + 1].isSharkOfBreedingAge() + blockGhostArray[i + 1][j + 1].isSharkOfBreedingAge() + blockGhostArray[i - 1][j - 1].isSharkOfBreedingAge() + blockGhostArray[i - 1][j].isSharkOfBreedingAge() + blockGhostArray[i][j - 1].isSharkOfBreedingAge() + blockGhostArray[i + 1][j - 1].isSharkOfBreedingAge()+blockGhostArray[i-1][j + 1].isSharkOfBreedingAge();
 
             //fish rules
             if(blockGhostArray[i][j].isFish==true){
                 if(sharkNeighbours>=5){
                     blockArrayNext[i][j].setDead();
+                    numberOfFish--;
                 }
                 else if(fishNeighbours==8){
                     blockArrayNext[i][j].setDead();
+                    numberOfFish--;
                 }
+                else if(blockGhostArray[i][j].blockAge>=10){
+                    blockArrayNext[i][j].setDead();
+                    numberOfFish--;
+                }
+
                 else{
                     blockArrayNext[i][j] = blockGhostArray[i][j];
                 }
@@ -192,11 +204,38 @@ void MainWindow::updateGUI(){
             else if(blockGhostArray[i][j].isShark==true){
                 if(sharkNeighbours>=6 && fishNeighbours==0){
                     blockArrayNext[i][j].setDead();
+                    numberOfSharks--;
                 }
+                else if(blockGhostArray[i][j].blockAge>=20){
+                    blockArrayNext[i][j].setDead();
+                        numberOfSharks--;
+                }
+                //1 in 32 chance of death
+                else if(rand()%32 +1 ==20){
+                    blockArrayNext[i][j].setDead();
+                        numberOfSharks--;
+                }
+
                 else{
                     blockArrayNext[i][j] = blockGhostArray[i][j];
                 }
 
+            }
+            //empty rules
+            else if(blockGhostArray[i][j].isDead==true){
+
+                if(fishNeighbours>=4 && fishOfBreedingAge>=3 && sharkNeighbours<4){
+                    blockArrayNext[i][j].setFish();
+                    numberOfFish++;
+                }
+                else if(sharkNeighbours>=4&&sharksOfBreedingAge>=3 && fishNeighbours<4){
+                    blockArrayNext[i][j].setShark();
+                    numberOfSharks++;
+
+                }
+                else{
+                    blockArrayNext[i][j] = blockGhostArray[i][j];
+                }
             }
 
             //lonely rule
@@ -295,11 +334,21 @@ qDebug()<<count;
 //ui->label->update();
 count++;
 
+//increment age of all blocks
+
+for(int i=0; i<mapSize;i++){
+    for(int j = 0; j<mapSize;j++){
+        blockArray[i][j].blockAge ++;
+    }
+}
+
  QThread::msleep(100);
 
 }
 void MainWindow::on_pushButton_clicked()
 {
+    numberOfFish=0;
+    numberOfSharks =0;
    // cv::VideoCapture cap;
     //cap.open(0);
     //cv::Mat vid;
@@ -315,10 +364,12 @@ void MainWindow::on_pushButton_clicked()
             if(randArray[i][j] >50){
             array[i][j]=1;
             blockArray[i][j].setFish();
+            numberOfFish++;
             }
             else if(randArray[i][j]<25){
                 blockArray[i][j].setShark();
                 array[i][j]=0;
+                numberOfSharks++;
 
             }
             else{array[i][j]=0;

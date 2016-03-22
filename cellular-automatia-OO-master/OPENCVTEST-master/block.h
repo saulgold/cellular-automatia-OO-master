@@ -10,10 +10,16 @@ public:
     bool isShark;
     bool isFish;
     bool isDead;
+    bool isOfBreedingAge(void);
+    bool isSharkOfBreedingAge(void);
+    bool isFishOfBreedingAge(void);
+
     int blockAge;
     int deathAge;
     int randomDeathProbability;
     int breedingAge;
+    int getBreedingAge(){  return breedingAge;}
+
     cv::Vec3b blockColour;
 
     void setShark(void);

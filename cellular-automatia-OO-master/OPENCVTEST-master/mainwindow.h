@@ -23,6 +23,8 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     //world *myWorld;
+    int numberOfSharks;
+    int numberOfFish;
 private slots:
     void on_pushButton_clicked();
     void updateGUI();
