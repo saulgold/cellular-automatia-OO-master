@@ -171,7 +171,33 @@ void MainWindow::updateGUI(){
         for (int j = mapSize; j <2*mapSize; ++j){
             neighbours = ghostArray[i + 1][j] + ghostArray[i][j + 1] + ghostArray[i + 1][j + 1] + ghostArray[i - 1][j - 1] + ghostArray[i - 1][j] + ghostArray[i][j - 1] + ghostArray[i + 1][j - 1]+ghostArray[i-1][j + 1];
             sharkNeighbours =  blockGhostArray[i + 1][j].isShark + blockGhostArray[i][j + 1].isShark + blockGhostArray[i + 1][j + 1].isShark + blockGhostArray[i - 1][j - 1].isShark + blockGhostArray[i - 1][j].isShark + blockGhostArray[i][j - 1].isShark + blockGhostArray[i + 1][j - 1].isShark+blockGhostArray[i-1][j + 1].isShark;
+            fishNeighbours =  blockGhostArray[i + 1][j].isFish + blockGhostArray[i][j + 1].isFish + blockGhostArray[i + 1][j + 1].isFish + blockGhostArray[i - 1][j - 1].isFish + blockGhostArray[i - 1][j].isFish + blockGhostArray[i][j - 1].isFish + blockGhostArray[i + 1][j - 1].isFish+blockGhostArray[i-1][j + 1].isFish;
 
+            //fish rules
+            if(blockGhostArray[i][j].isFish==true){
+                if(sharkNeighbours>=5){
+                    blockArrayNext[i][j].setDead();
+                }
+                else if(fishNeighbours==8){
+                    blockArrayNext[i][j].setDead();
+                }
+                else{
+                    blockArrayNext[i][j] = blockGhostArray[i][j];
+                }
+
+
+            }
+            //shark rules
+
+            else if(blockGhostArray[i][j].isShark==true){
+                if(sharkNeighbours>=6 && fishNeighbours==0){
+                    blockArrayNext[i][j].setDead();
+                }
+                else{
+                    blockArrayNext[i][j] = blockGhostArray[i][j];
+                }
+
+            }
 
             //lonely rule
             if (neighbours <2){
@@ -197,6 +223,7 @@ void MainWindow::updateGUI(){
     for (int i = mapSize; i < 2*mapSize; ++i){
         for (int j = mapSize; j < 2*mapSize; ++j){
 
+            blockArray[i-mapSize][j-mapSize]=blockArrayNext[i][j];
 
             array[i-mapSize][j-mapSize] = arrayNext[i][j];
 
