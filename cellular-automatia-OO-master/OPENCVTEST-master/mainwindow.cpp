@@ -36,7 +36,6 @@ block blockArray[mapSize][mapSize];
 cv::Scalar arrayScalar[mapSize][mapSize];
 
 
-
     //initialise arrayNExt with zeros
     int arrayNext[3*mapSize][3*mapSize];
     block blockArrayNext[3*mapSize][3*mapSize];
@@ -76,9 +75,10 @@ MainWindow::~MainWindow()
     delete ui;
 }
 void MainWindow::updateGUI(){
-
+//display data
 ui->textEdit->setText(QString::number(numberOfFish));
 ui->textEdit_2->setText(QString::number(numberOfSharks));
+
     //set ghoast array to current array
 
     for (int i = 0; i < mapSize; ++i){

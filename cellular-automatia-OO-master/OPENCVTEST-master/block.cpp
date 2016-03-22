@@ -7,7 +7,7 @@ block::block()
 
 bool block::isFishOfBreedingAge(void){
     if(isFish ==true){
-        if(breedingAge>=2){
+        if(blockAge>=2){
             return true;
         }
         else{
@@ -21,7 +21,7 @@ bool block::isFishOfBreedingAge(void){
 }
 bool block::isSharkOfBreedingAge(void){
   if(isShark == true){
-        if(breedingAge>=3){
+        if(blockAge>=3){
             return true;
         }
         else{
