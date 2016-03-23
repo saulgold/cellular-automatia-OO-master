@@ -49,8 +49,8 @@
    <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
-      <x>530</x>
-      <y>200</y>
+      <x>480</x>
+      <y>160</y>
       <width>91</width>
       <height>20</height>
      </rect>
@@ -62,8 +62,8 @@
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>520</x>
-      <y>150</y>
+      <x>470</x>
+      <y>130</y>
       <width>91</width>
       <height>16</height>
      </rect>
@@ -75,8 +75,8 @@
    <widget class="QLCDNumber" name="lcdNumber">
     <property name="geometry">
      <rect>
-      <x>600</x>
-      <y>200</y>
+      <x>580</x>
+      <y>160</y>
       <width>64</width>
       <height>23</height>
      </rect>
@@ -88,11 +88,37 @@
    <widget class="QLCDNumber" name="lcdNumber_2">
     <property name="geometry">
      <rect>
-      <x>610</x>
-      <y>150</y>
+      <x>580</x>
+      <y>130</y>
       <width>64</width>
       <height>23</height>
      </rect>
+    </property>
+   </widget>
+   <widget class="QLCDNumber" name="lcdNumber_3">
+    <property name="geometry">
+     <rect>
+      <x>580</x>
+      <y>190</y>
+      <width>64</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_5">
+    <property name="geometry">
+     <rect>
+      <x>460</x>
+      <y>190</y>
+      <width>111</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Number of iterations</string>
     </property>
    </widget>
   </widget>

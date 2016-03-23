@@ -51,9 +51,11 @@ void MainWindow::updateGUI(){
 //display data
     ui->lcdNumber->setPalette(Qt::black);
     ui->lcdNumber_2->setPalette(Qt::black);
+    ui->lcdNumber_3->setPalette(Qt::black);
 
 ui->lcdNumber->display(QString::number(numberOfFish));
 ui->lcdNumber_2->display(QString::number(numberOfSharks));
+ui->lcdNumber_3->display(QString::number(count));
 
     //set ghoast array to current array
 
@@ -264,14 +266,34 @@ for(int i=0; i<mapSize;i++){
 }
 void MainWindow::on_pushButton_clicked()
 {
+    count =0;
     numberOfFish=0;
     numberOfSharks =0;
 
     int randArray[mapSize][mapSize];
+    int arrayCount =0;
+    //create an array with values 1 to 100
     for(int i=0;i<mapSize;i++){
        for(int j=0; j<mapSize;j++){
-           randArray[i][j] = rand()&100;
+           randArray[i][j] = arrayCount;
+           arrayCount++;
        }
+       arrayCount++;
+    }
+    for(int i=0;i<mapSize;i++){
+       for(int j=0; j<mapSize;j++){
+          randArray[i][j] = randArray[i][j];
+
+       }
+
+    }
+
+    for(int i=0;i<mapSize;i++){
+       for(int j=0; j<mapSize;j++){
+          randArray[i][j] = rand() %100;
+
+       }
+
     }
 
     for (int i =0; i<mapSize;++i){

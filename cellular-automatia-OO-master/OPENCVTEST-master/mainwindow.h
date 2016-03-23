@@ -22,7 +22,7 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-    //world *myWorld;
+
     int numberOfSharks;
     int numberOfFish;
 private slots:
@@ -36,7 +36,7 @@ private:
     QTimer *timer;
     Shark *shark;
 
-    //cv::Mat frame;
+
 
 };
 
