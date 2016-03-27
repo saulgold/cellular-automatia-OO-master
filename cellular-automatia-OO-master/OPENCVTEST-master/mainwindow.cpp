@@ -16,16 +16,19 @@ int count = 0;
 
 cv::Mat  frame2;
 int const mapSize = 100;
-
+QTime runTime;
 block blockArray[mapSize][mapSize];
 block blockArrayNext[3*mapSize][3*mapSize];
 block blockGhostArray[3*mapSize][3*mapSize];
-
+int fishPercent = 50;
+int sharkPercent = 25;
+int frameRate = 0;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+
     //initialise bolckArrayNExt as all dead
     for (int i = 0; i < 3*mapSize; ++i){
         for (int j = 0; j < 3*mapSize; ++j){
@@ -40,7 +43,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     timer = new QTimer(this);
    connect(timer,SIGNAL(timeout()),this,SLOT(updateGUI()));
-     timer->start(20);
+     timer->start();
 }
 
 MainWindow::~MainWindow()
@@ -49,13 +52,17 @@ MainWindow::~MainWindow()
 }
 void MainWindow::updateGUI(){
 //display data
-    ui->lcdNumber->setPalette(Qt::black);
-    ui->lcdNumber_2->setPalette(Qt::black);
+    ui->lcdNumber->setPalette(QColor(200,124,130));
+    ui->lcdNumber_2->setPalette(QColor(100,0,100));
     ui->lcdNumber_3->setPalette(Qt::black);
-
-ui->lcdNumber->display(QString::number(numberOfFish));
-ui->lcdNumber_2->display(QString::number(numberOfSharks));
-ui->lcdNumber_3->display(QString::number(count));
+    ui->lcdNumber_4->setPalette(Qt::black);
+    ui->lcdNumber_5->setPalette(Qt::black);
+    ui->lcdNumber_6->setPalette(Qt::black);
+    ui->lcdNumber_7->setPalette(Qt::black);
+    ui->lcdNumber_8->setPalette(Qt::black);
+    ui->lcdNumber->display(QString::number(numberOfFish));
+    ui->lcdNumber_2->display(QString::number(numberOfSharks));
+    ui->lcdNumber_3->display(QString::number(count));
 
     //set ghoast array to current array
 
@@ -190,7 +197,7 @@ ui->lcdNumber_3->display(QString::number(count));
                 //1 in 32 chance of death
                 else if(rand()%32 +1 ==20){
                     blockArrayNext[i][j].setDead();
-                        numberOfSharks--;
+                       numberOfSharks--;
                 }
 
                 else{
@@ -250,7 +257,7 @@ ui->lcdNumber_3->display(QString::number(count));
 
 qDebug()<<count;
 
-//ui->label->update();
+ui->label->update();
 count++;
 
 //increment age of all blocks
@@ -261,17 +268,36 @@ for(int i=0; i<mapSize;i++){
     }
 }
 
- QThread::msleep(100);
-
+QThread::msleep(frameRate);
+//display elapsed time
+int timeInMs = runTime.elapsed();
+ui->lcdNumber_6->display(QString::number(timeInMs));
+if(count==1000){
+    ui->lcdNumber_7->display(QString::number(timeInMs));
+}
 }
 void MainWindow::on_pushButton_clicked()
 {
+    //start timer
+    runTime.start();
+    frameRate = ui->verticalSlider_3->value();
     count =0;
     numberOfFish=0;
     numberOfSharks =0;
+    fishPercent = ui->verticalSlider->value();
+    sharkPercent = ui->verticalSlider_2->value();
+//    if((ui->verticalSlider->value()+ui->verticalSlider_2->value())>100){
+//            fishPercent = 50;
+//            fishPercent = 50;
+//            ui->verticalSlider->setValue(50);
+//            ui->verticalSlider_2->setValue(50);
+//            ui->lcdNumber_4->display(50);
+//            ui->lcdNumber_5->display(50);
+//}
 
     int randArray[mapSize][mapSize];
     int arrayCount =0;
+    int iRand,jRand, temp;
     //create an array with values 1 to 100
     for(int i=0;i<mapSize;i++){
        for(int j=0; j<mapSize;j++){
@@ -280,30 +306,40 @@ void MainWindow::on_pushButton_clicked()
        }
        arrayCount++;
     }
+    //swap array values randomly
     for(int i=0;i<mapSize;i++){
        for(int j=0; j<mapSize;j++){
-          randArray[i][j] = randArray[i][j];
+           iRand = rand() % mapSize;
+           jRand = rand() % mapSize;
+           temp =  randArray[i][j];
+          randArray[i][j] = randArray[iRand][jRand];
+          randArray[iRand][jRand]=temp;
 
        }
 
     }
 
-    for(int i=0;i<mapSize;i++){
-       for(int j=0; j<mapSize;j++){
-          randArray[i][j] = rand() %100;
+//    for(int i=0;i<mapSize;i++){
+//       for(int j=0; j<mapSize;j++){
+//          randArray[i][j] = rand() %100;
 
-       }
+//       }
 
-    }
+//    }
+    int startingFish = (mapSize*mapSize)*(fishPercent/100.0);
+    int startingShark = ((mapSize*mapSize)*(sharkPercent/100.0));
+    int totalGridSize = mapSize*mapSize;
 
     for (int i =0; i<mapSize;++i){
         for(int j=0; j<mapSize; ++j){
-            if(randArray[i][j] >50){
+
+
+            if(randArray[i][j] >totalGridSize -startingFish){
 
             blockArray[i][j].setFish();
             numberOfFish++;
             }
-            else if(randArray[i][j]<25){
+            else if(randArray[i][j]<startingShark){
                 blockArray[i][j].setShark();
 
                 numberOfSharks++;
