@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>811</width>
-    <height>554</height>
+    <width>993</width>
+    <height>552</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -254,9 +254,9 @@
    <widget class="QLabel" name="label_9">
     <property name="geometry">
      <rect>
-      <x>696</x>
+      <x>760</x>
       <y>510</y>
-      <width>91</width>
+      <width>51</width>
       <height>16</height>
      </rect>
     </property>
@@ -297,6 +297,16 @@
     </property>
     <property name="orientation">
      <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QTextBrowser" name="textBrowser">
+    <property name="geometry">
+     <rect>
+      <x>780</x>
+      <y>30</y>
+      <width>181</width>
+      <height>191</height>
+     </rect>
     </property>
    </widget>
   </widget>

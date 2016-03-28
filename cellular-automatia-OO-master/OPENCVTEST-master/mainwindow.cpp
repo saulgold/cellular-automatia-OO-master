@@ -13,6 +13,9 @@
 #include<shark.h>
 
 int count = 0;
+int ID = omp_get_thread_num();
+
+
 
 cv::Mat  frame2;
 int const mapSize = 100;
@@ -28,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    qDebug()<< ID;
 
     //initialise bolckArrayNExt as all dead
     for (int i = 0; i < 3*mapSize; ++i){
@@ -66,12 +70,15 @@ void MainWindow::updateGUI(){
 
     //set ghoast array to current array
 
+
+
     for (int i = 0; i < mapSize; ++i){
         for (int j = 0; j < mapSize; ++j){
 
         blockGhostArray[i][j]=blockArray[i][j];
         }
     }
+
     //10-2*mapSize, 0-10
     for (int i = mapSize; i < 2*mapSize; ++i){
         for (int j = 0; j < mapSize; ++j){
@@ -146,7 +153,6 @@ void MainWindow::updateGUI(){
         }
 
     }
-
 
 
 
@@ -257,6 +263,8 @@ void MainWindow::updateGUI(){
 
 qDebug()<<count;
 
+
+ui->textBrowser->append(QString::number(count)+"\n");
 ui->label->update();
 count++;
 

@@ -10,7 +10,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = OPENCVTEST
 TEMPLATE = app
-QMAKE_CXXFLAGS += -openmp
+QMAKE_CXXFLAGS += -fopenmp
 QMAKE_LFLAGS +=/STACK:32000000
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -47,4 +47,4 @@ LIBS+=-LC:\\opencv\\mybuild\\lib\\Debug\
     -lopencv_flann300d \
     -lopencv_hal300d \
     -lopencv_highgui300d
-
+    -fopenmp
