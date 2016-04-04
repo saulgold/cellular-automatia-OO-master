@@ -10,6 +10,8 @@
 #include <QTime>
 #include <omp.h>
 #include <shark.h>
+#include <fstream>
+#include <sstream>
 namespace Ui {
 class MainWindow;
 }
@@ -22,14 +24,16 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-
+    //int mapSize = 100;
     int numberOfSharks;
     int numberOfFish;
+    //int getMapSize(void){return mapSize;}
 private slots:
     void on_pushButton_clicked();
     void updateGUI();
 
-    void on_pushButton_2_clicked();
+
+
 
 private:
     Ui::MainWindow *ui;
