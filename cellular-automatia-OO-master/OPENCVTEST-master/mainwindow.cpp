@@ -13,14 +13,14 @@
 #include<shark.h>
 
 int count = 0;
-int runs = 0;
+int runs=0;
 int maxThreads = omp_get_max_threads();
 int ID = omp_get_thread_num();
 
 std::ofstream speedData("speed_data.csv");
 
 cv::Mat  frame2;
-int const mapSize = 100;
+int const mapSize = 50;
 QTime runTime;
 block blockArray[mapSize][mapSize];
 block blockArrayNext[3*mapSize][3*mapSize];
@@ -28,7 +28,7 @@ block blockGhostArray[3*mapSize][3*mapSize];
 int fishPercent = 50;
 int sharkPercent = 25;
 int frameRate = 0;
-
+int threadNumber=1;
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -274,7 +274,7 @@ void MainWindow::updateGUI(){
 
     }
 
-
+//turn visuals on
 if(ui->radioButton->isChecked()){
  frame2 = cv::Mat(mapSize, mapSize, CV_8UC3, cv::Vec3b(0,0,0));
 
@@ -292,7 +292,7 @@ if(ui->radioButton->isChecked()){
 
  ui->label_2->setPixmap(pix2.scaled(400, 400, Qt::IgnoreAspectRatio, Qt::FastTransformation));
 }
-qDebug()<<count;
+//qDebug()<<count;
 
 
 //ui->textBrowser->append(QString::number(ID));
@@ -311,12 +311,13 @@ QThread::msleep(frameRate);
 //display elapsed time
 int timeInMs = runTime.elapsed();
 ui->lcdNumber_6->display(QString::number(timeInMs));
-if(ui->radioButton_3->isChecked() && runs <=5){
 
+if(ui->radioButton_3->isChecked() && runs <=5&&threadNumber<=4){
 
-    if(count==1000){
+    ui->spinBox->setValue(threadNumber);
+    if(count==100){
         ui->lcdNumber_7->display(QString::number(timeInMs));
-        speedData<<1000<<","<<ui->lcdNumber_6->value()<<","<<ui->spinBox->value()<<","<<ui->radioButton->isChecked()<<std::endl;
+        speedData<<100<<","<<ui->lcdNumber_6->value()<<","<<ui->spinBox->value()<<","<<ui->radioButton->isChecked()<<std::endl;
         ui->textBrowser_3->append(QString::number(ui->lcdNumber_6->value()));
 
         runs++;
@@ -326,7 +327,14 @@ if(ui->radioButton_3->isChecked() && runs <=5){
 
         }
     if(runs>5){
+
+        threadNumber++;
+        runs=0;
+
+    }
+    if(threadNumber==5){
         ui->textBrowser_4->setText("finished speed test");
+        speedData.close();
     }
     }
 }
