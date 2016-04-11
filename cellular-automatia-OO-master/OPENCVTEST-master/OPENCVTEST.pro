@@ -12,6 +12,8 @@ TARGET = OPENCVTEST
 TEMPLATE = app
 
 QMAKE_LFLAGS +=/STACK:32000000
+  QMAKE_CXXFLAGS += -openmp -arch:AVX -D "_CRT_SECURE_NO_WARNINGS"
+  QMAKE_CXXFLAGS_RELEASE *= -O2
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -48,4 +50,5 @@ LIBS+=-LC:\\opencv\\mybuild\\lib\\Debug\
     -lopencv_flann300d \
     -lopencv_hal300d \
     -lopencv_highgui300d
+
 

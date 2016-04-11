@@ -20,7 +20,7 @@ int ID = omp_get_thread_num();
 std::ofstream speedData("speed_data.csv");
 
 cv::Mat  frame2;
-int const mapSize = 50;
+int const mapSize = 100;
 QTime runTime;
 block blockArray[mapSize][mapSize];
 block blockArrayNext[3*mapSize][3*mapSize];
@@ -29,12 +29,14 @@ int fishPercent = 50;
 int sharkPercent = 25;
 int frameRate = 0;
 int threadNumber=1;
-
+int currentThreads;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+
+
     speedData << "No of iterations,"<<"time taken,"<<"number of cores,"<<"visuals"<<std::endl;
 
 
@@ -66,15 +68,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::updateGUI(){
 
-
-//#pragma omp parallel
-//    {
-//    ui->textBrowser->append(QString::number(omp_get_thread_num()));
-//}
-//display data
-    int numThreads =omp_get_max_threads();
-    ui->textBrowser->append(QString::number(numThreads));
-
     ui->lcdNumber->setPalette(QColor(200,124,130));
     ui->lcdNumber_2->setPalette(QColor(100,0,100));
     ui->lcdNumber_3->setPalette(Qt::black);
@@ -86,11 +79,26 @@ void MainWindow::updateGUI(){
     ui->lcdNumber->display(QString::number(numberOfFish));
     ui->lcdNumber_2->display(QString::number(numberOfSharks));
     ui->lcdNumber_3->display(QString::number(count));
+//#pragma omp parallel
+//    {
+//    ui->textBrowser->append(QString::number(omp_get_thread_num()));
+//}
+//display data
+   // int numThreads =omp_get_max_threads();
+   // ui->textBrowser->append(QString::number(numThreads));
+
 
     //set ghoast array to current array
-
-#pragma omp parallel num_threads(4)
+            omp_set_dynamic(0);
+omp_set_num_threads(threadNumber);
+#pragma omp parallel num_threads(threadNumber)
     {
+
+
+
+     currentThreads = omp_get_num_threads();
+
+
 #pragma omp for
 
     for (int i = 0; i < mapSize; ++i){
@@ -185,14 +193,16 @@ void MainWindow::updateGUI(){
 
     }
 
-}
+
 
 
     //apply rules
 
     int sharkNeighbours, fishNeighbours,fishOfBreedingAge,sharksOfBreedingAge;
 
+    #pragma omp for
       for (int i = mapSize; i <2*mapSize; ++i){
+
         for (int j = mapSize; j <2*mapSize; ++j){
             sharkNeighbours =  blockGhostArray[i + 1][j].isShark + blockGhostArray[i][j + 1].isShark + blockGhostArray[i + 1][j + 1].isShark + blockGhostArray[i - 1][j - 1].isShark + blockGhostArray[i - 1][j].isShark + blockGhostArray[i][j - 1].isShark + blockGhostArray[i + 1][j - 1].isShark+blockGhostArray[i-1][j + 1].isShark;
             fishNeighbours =  blockGhostArray[i + 1][j].isFish + blockGhostArray[i][j + 1].isFish + blockGhostArray[i + 1][j + 1].isFish + blockGhostArray[i - 1][j - 1].isFish + blockGhostArray[i - 1][j].isFish + blockGhostArray[i][j - 1].isFish + blockGhostArray[i + 1][j - 1].isFish+blockGhostArray[i-1][j + 1].isFish;
@@ -264,7 +274,9 @@ void MainWindow::updateGUI(){
 
         }
     //display new array
+      #pragma omp for
     for (int i = mapSize; i < 2*mapSize; ++i){
+
         for (int j = mapSize; j < 2*mapSize; ++j){
 
             blockArray[i-mapSize][j-mapSize]=blockArrayNext[i][j];
@@ -274,6 +286,7 @@ void MainWindow::updateGUI(){
 
     }
 
+}
 //turn visuals on
 if(ui->radioButton->isChecked()){
  frame2 = cv::Mat(mapSize, mapSize, CV_8UC3, cv::Vec3b(0,0,0));
@@ -315,18 +328,19 @@ ui->lcdNumber_6->display(QString::number(timeInMs));
 if(ui->radioButton_3->isChecked() && runs <=5&&threadNumber<=4){
 
     ui->spinBox->setValue(threadNumber);
-    if(count==100){
+    if(count==500){
         ui->lcdNumber_7->display(QString::number(timeInMs));
-        speedData<<100<<","<<ui->lcdNumber_6->value()<<","<<ui->spinBox->value()<<","<<ui->radioButton->isChecked()<<std::endl;
+        speedData<<500<<","<<ui->lcdNumber_6->value()<<","<<ui->spinBox->value()<<","<<ui->radioButton->isChecked()<<std::endl;
         ui->textBrowser_3->append(QString::number(ui->lcdNumber_6->value()));
-
+         ui->textBrowser->append(QString::number(currentThreads));
+         ui->textBrowser->append(QString::number(threadNumber));
         runs++;
         count =0;
         ui->pushButton->clicked();
 
 
         }
-    if(runs>5){
+    if(runs>2){
 
         threadNumber++;
         runs=0;
@@ -452,6 +466,7 @@ void MainWindow::on_pushButton_clicked()
     }
 
 }
+
 
 
 
