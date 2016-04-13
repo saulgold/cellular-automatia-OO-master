@@ -12,8 +12,11 @@ TARGET = OPENCVTEST
 TEMPLATE = app
 
 QMAKE_LFLAGS +=/STACK:32000000
-  QMAKE_CXXFLAGS += -openmp -arch:AVX -D "_CRT_SECURE_NO_WARNINGS"
-  QMAKE_CXXFLAGS_RELEASE *= -O2
+QMAKE_CXXFLAGS += -openmp -arch:AVX -D "_CRT_SECURE_NO_WARNINGS"
+QMAKE_CXXFLAGS_RELEASE *= -O2
+QMAKE_CC = mpicc
+QMAKE_CXX = mpic++
+
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -29,7 +32,8 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui \
     shark.ui
 
-INCLUDEPATH+=C:\\opencv\\build\\install\\include
+INCLUDEPATH+=C:\\opencv\\build\\install\\include \
+           C:\MPI\Include
 
 LIBS+=-LC:\\opencv\\mybuild\\lib\\Debug\
     -lopencv_imgcodecs300d \
@@ -49,6 +53,5 @@ LIBS+=-LC:\\opencv\\mybuild\\lib\\Debug\
     -lopencv_features2d300d \
     -lopencv_flann300d \
     -lopencv_hal300d \
-    -lopencv_highgui300d
-
-
+    -lopencv_highgui300d \
+    C:\MPI\Lib\x86\msmpi.lib
