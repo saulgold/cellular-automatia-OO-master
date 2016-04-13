@@ -382,7 +382,7 @@ if(ui->radioButton_3->isChecked() && runs <=5&&threadNumber<=4){
     if(count==iterationsTest){
         ui->lcdNumber_7->display(QString::number(timeInMs));
         //speedData << "No of iterations,"<<"time taken,"<<"number of cores,"<<"visuals"<<"map size"<<std::endl;
-        speedData<<iterationsTest<<","<<ui->lcdNumber_6->value()<<","<<ui->spinBox->value()<<","<<ui->radioButton->isChecked()<<userMapSize<<std::endl;
+        speedData<<iterationsTest<<","<<ui->lcdNumber_6->value()<<","<<threadNumber<<","<<ui->radioButton->isChecked()<<","<<userMapSize<<std::endl;
         ui->textBrowser_3->append(QString::number(ui->lcdNumber_6->value()));
          ui->textBrowser->append(QString::number(currentThreads));
          ui->textBrowser->append(QString::number(threadNumber));
@@ -394,8 +394,8 @@ if(ui->radioButton_3->isChecked() && runs <=5&&threadNumber<=4){
 
         }
     //change map size
-    if(threadNumber==MaxthreadNumber+1 &&runs >2){
-        userMapSize = userMapSize*2;
+    if((threadNumber==MaxthreadNumber) &&(runs >2)){
+        userMapSize = 2*userMapSize;
         ui->gridSizeSpinBox->setValue(userMapSize);
     }
     //reset runs
