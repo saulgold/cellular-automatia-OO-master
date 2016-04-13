@@ -12,6 +12,8 @@
 #include <shark.h>
 #include <fstream>
 #include <sstream>
+#include <QString>
+#include <QFile>
 namespace Ui {
 class MainWindow;
 }

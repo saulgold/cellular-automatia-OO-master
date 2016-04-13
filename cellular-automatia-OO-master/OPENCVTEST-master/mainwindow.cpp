@@ -20,7 +20,7 @@ int ID = omp_get_thread_num();
 std::ofstream speedData("speed_data.csv");
 
 cv::Mat  frame2;
-int const mapSize = 100;
+int const mapSize = 1000;
 QTime runTime;
 block blockArray[mapSize][mapSize];
 block blockArrayNext[3*mapSize][3*mapSize];
@@ -30,6 +30,8 @@ int sharkPercent = 25;
 int frameRate = 0;
 int threadNumber=1;
 int currentThreads;
+int iterationsTest;
+int userMapSize;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -37,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
 
 
-    speedData << "No of iterations,"<<"time taken,"<<"number of cores,"<<"visuals"<<std::endl;
+    speedData << "No of iterations,"<<"time taken,"<<"number of cores,"<<"visuals"<<"map size"<<std::endl;
 
 
     qDebug()<< ID;
@@ -90,6 +92,7 @@ void MainWindow::updateGUI(){
 
     //set ghoast array to current array
             omp_set_dynamic(0);
+int MaxthreadNumber = ui->spinBox->value();
 omp_set_num_threads(threadNumber);
 #pragma omp parallel num_threads(threadNumber)
     {
@@ -101,8 +104,8 @@ omp_set_num_threads(threadNumber);
 
 #pragma omp for
 
-    for (int i = 0; i < mapSize; ++i){
-        for (int j = 0; j < mapSize; ++j){
+    for (int i = 0; i < userMapSize; ++i){
+        for (int j = 0; j < userMapSize; ++j){
 
         blockGhostArray[i][j]=blockArray[i][j];
         }
@@ -110,85 +113,85 @@ omp_set_num_threads(threadNumber);
 
     //10-2*mapSize, 0-10
     #pragma omp for
-    for (int i = mapSize; i < 2*mapSize; ++i){
-        for (int j = 0; j < mapSize; ++j){
+    for (int i = userMapSize; i < 2*userMapSize; ++i){
+        for (int j = 0; j < userMapSize; ++j){
 
-        blockGhostArray[i][j]=blockArray[i-mapSize][j];
+        blockGhostArray[i][j]=blockArray[i-userMapSize][j];
         }
     }
     //0-3*mapSize, 0-10
     #pragma omp for
-    for (int i = mapSize; i < 2*mapSize; ++i){
-        for (int j = 0; j < mapSize; ++j){
+    for (int i = userMapSize; i < 2*userMapSize; ++i){
+        for (int j = 0; j < userMapSize; ++j){
 
-        blockGhostArray[i][j]=blockArray[i-mapSize][j];
+        blockGhostArray[i][j]=blockArray[i-userMapSize][j];
         }
     }
     //2*mapSize-3*mapSize, 0-10
     #pragma omp for
-    for (int i = 2*mapSize; i < 3*mapSize; ++i){
-        for (int j = 0; j < mapSize; ++j){
+    for (int i = 2*userMapSize; i < 3*userMapSize; ++i){
+        for (int j = 0; j < userMapSize; ++j){
 
-        blockGhostArray[i][j]=blockArray[i-2*mapSize][j];
+        blockGhostArray[i][j]=blockArray[i-2*userMapSize][j];
         }
     }
     //0-10, 10-2*mapSize
     #pragma omp for
-    for (int i = 0; i < mapSize; ++i){
-        for (int j = mapSize; j < 2*mapSize; ++j){
+    for (int i = 0; i < userMapSize; ++i){
+        for (int j = userMapSize; j < 2*userMapSize; ++j){
 
-        blockGhostArray[i][j]=blockArray[i][j-mapSize];
+        blockGhostArray[i][j]=blockArray[i][j-userMapSize];
         }
     }
     //0-10, 2*mapSize-3*mapSize
     #pragma omp for
-    for (int i = 0; i < mapSize; ++i){
-        for (int j = 2*mapSize; j < 3*mapSize; ++j){
+    for (int i = 0; i < userMapSize; ++i){
+        for (int j = 2*userMapSize; j < 3*userMapSize; ++j){
 
-            blockGhostArray[i][j]=blockArray[i][j-2*mapSize];
+            blockGhostArray[i][j]=blockArray[i][j-2*userMapSize];
         }
     }
     //2*mapSize-3*mapSize, 2*mapSize-3*mapSize
     #pragma omp for
-    for (int i = 2*mapSize; i < 3*mapSize; ++i){
-        for (int j = 2*mapSize; j < 3*mapSize; ++j){
+    for (int i = 2*userMapSize; i < 3*userMapSize; ++i){
+        for (int j = 2*userMapSize; j < 3*userMapSize; ++j){
 
-            blockGhostArray[i][j]=blockArray[i-2*mapSize][j-2*mapSize];
+            blockGhostArray[i][j]=blockArray[i-2*userMapSize][j-2*mapSize];
         }
     }
     //10-2*mapSize, 10-2*mapSize
     #pragma omp for
-    for (int i = mapSize; i < 2*mapSize; ++i){
-        for (int j = mapSize; j < 2*mapSize; ++j){
+    for (int i = userMapSize; i < 2*userMapSize; ++i){
+        for (int j = userMapSize; j < 2*userMapSize; ++j){
 
-        blockGhostArray[i][j]=blockArray[i-mapSize][j-mapSize];
+        blockGhostArray[i][j]=blockArray[i-userMapSize][j-userMapSize];
         }
 
     }
     //10-2*mapSize, 2*mapSize-3*mapSize
     #pragma omp for
-    for (int i = mapSize; i < 2*mapSize; ++i){
-        for (int j = 2*mapSize; j < 3*mapSize; ++j){
+    for (int i = userMapSize; i < 2*userMapSize; ++i){
+        for (int j = 2*userMapSize; j < 3*userMapSize; ++j){
 
-        blockGhostArray[i][j]=blockArray[i-mapSize][j-2*mapSize];
+        blockGhostArray[i][j]=blockArray[i-userMapSize][j-2*userMapSize];
         }
 
     }
     //2*mapSize-3*mapSize, 2*mapSize-3*mapSize
     #pragma omp for
-    for (int i = 2*mapSize; i < 3*mapSize; ++i){
-        for (int j = 2*mapSize; j < 3*mapSize; ++j){
+    for (int i = 2*userMapSize; i < 3*userMapSize; ++i){
+        for (int j = 2*userMapSize; j < 3*userMapSize; ++j){
 
-        blockGhostArray[i][j]=blockArray[i-2*mapSize][j-2*mapSize];
+        blockGhostArray[i][j]=blockArray[i-2*userMapSize][j-2*userMapSize];
         }
 
     }
     //2*mapSize-3*mapSize, mapSize-2*mapSize
     #pragma omp for
-    for (int i = 2*mapSize; i < 3*mapSize; ++i){
-        for (int j = mapSize; j < 2*mapSize; ++j){
+    for (int i = 2*userMapSize; i < 3*userMapSize; ++i){
+        for (int j = userMapSize; j < 2*userMapSize; ++j){
 
-        blockGhostArray[i][j]=blockArray[i-2*mapSize][j-mapSize];
+        blockGhostArray[i][j]=blockArray[i-2*userMapSize][j-userMapSize];
         }
 
     }
@@ -201,9 +204,9 @@ omp_set_num_threads(threadNumber);
     int sharkNeighbours, fishNeighbours,fishOfBreedingAge,sharksOfBreedingAge;
 
     #pragma omp for
-      for (int i = mapSize; i <2*mapSize; ++i){
+      for (int i = userMapSize; i <2*userMapSize; ++i){
 
-        for (int j = mapSize; j <2*mapSize; ++j){
+        for (int j = userMapSize; j <2*userMapSize; ++j){
             sharkNeighbours =  blockGhostArray[i + 1][j].isShark + blockGhostArray[i][j + 1].isShark + blockGhostArray[i + 1][j + 1].isShark + blockGhostArray[i - 1][j - 1].isShark + blockGhostArray[i - 1][j].isShark + blockGhostArray[i][j - 1].isShark + blockGhostArray[i + 1][j - 1].isShark+blockGhostArray[i-1][j + 1].isShark;
             fishNeighbours =  blockGhostArray[i + 1][j].isFish + blockGhostArray[i][j + 1].isFish + blockGhostArray[i + 1][j + 1].isFish + blockGhostArray[i - 1][j - 1].isFish + blockGhostArray[i - 1][j].isFish + blockGhostArray[i][j - 1].isFish + blockGhostArray[i + 1][j - 1].isFish+blockGhostArray[i-1][j + 1].isFish;
             fishOfBreedingAge = blockGhostArray[i + 1][j].isFishOfBreedingAge() + blockGhostArray[i][j + 1].isFishOfBreedingAge() + blockGhostArray[i + 1][j + 1].isFishOfBreedingAge() + blockGhostArray[i - 1][j - 1].isFishOfBreedingAge() + blockGhostArray[i - 1][j].isFishOfBreedingAge() + blockGhostArray[i][j - 1].isFishOfBreedingAge() + blockGhostArray[i + 1][j - 1].isFishOfBreedingAge()+blockGhostArray[i-1][j + 1].isFishOfBreedingAge();
@@ -275,11 +278,11 @@ omp_set_num_threads(threadNumber);
         }
     //display new array
       #pragma omp for
-    for (int i = mapSize; i < 2*mapSize; ++i){
+    for (int i = userMapSize; i < 2*userMapSize; ++i){
 
-        for (int j = mapSize; j < 2*mapSize; ++j){
+        for (int j = userMapSize; j < 2*userMapSize; ++j){
 
-            blockArray[i-mapSize][j-mapSize]=blockArrayNext[i][j];
+            blockArray[i-userMapSize][j-userMapSize]=blockArrayNext[i][j];
 
 
         }
@@ -289,12 +292,12 @@ omp_set_num_threads(threadNumber);
 }
 //turn visuals on
 if(ui->radioButton->isChecked()){
- frame2 = cv::Mat(mapSize, mapSize, CV_8UC3, cv::Vec3b(0,0,0));
+ frame2 = cv::Mat(userMapSize, userMapSize, CV_8UC3, cv::Vec3b(0,0,0));
 
 
     //for frame2
-    for (int i = 0; i < mapSize; ++i){
-        for (int j = 0; j < mapSize; ++j){
+    for (int i = 0; i < userMapSize; ++i){
+        for (int j = 0; j < userMapSize; ++j){
 
     frame2.at<cv::Vec3b>(cv::Point(i,j)) = blockArray[i][j].getColour();
         }
@@ -304,6 +307,54 @@ if(ui->radioButton->isChecked()){
  QPixmap pix2 = QPixmap::fromImage(img2);
 
  ui->label_2->setPixmap(pix2.scaled(400, 400, Qt::IgnoreAspectRatio, Qt::FastTransformation));
+ //save image after a certain iterations
+
+ switch(count){
+        case 0:
+ {
+            QFile file("0iterations_size"+QString::number(userMapSize)+"_"+QString::number(currentThreads)+"threads.png");
+            file.open(QIODevice::WriteOnly);
+            pix2.scaled(400,400,Qt::IgnoreAspectRatio,Qt::FastTransformation).save(&file,"PNG");
+            file.close();
+            break;
+ }
+        case 100:
+ {
+            QFile file1("100iterations_size"+QString::number(userMapSize)+"_"+QString::number(currentThreads)+"threads.png");
+            file1.open(QIODevice::WriteOnly);
+            pix2.scaled(400,400,Qt::IgnoreAspectRatio,Qt::FastTransformation).save(&file1,"PNG");
+            file1.close();
+            break;
+ }
+        case 500:
+ {
+            QFile file2("500iterations_size"+QString::number(userMapSize)+"_"+QString::number(currentThreads)+"threads.png");
+            file2.open(QIODevice::WriteOnly);
+            pix2.scaled(400,400,Qt::IgnoreAspectRatio,Qt::FastTransformation).save(&file2,"PNG");
+            file2.close();
+            break;
+ }
+        case 1000:
+ {
+             QFile file3("1000iterations_size"+QString::number(userMapSize)+"_"+QString::number(currentThreads)+"threads.png");
+             file3.open(QIODevice::WriteOnly);
+             pix2.scaled(400,400,Qt::IgnoreAspectRatio,Qt::FastTransformation).save(&file3,"PNG");
+             file3.close();
+            break;
+ }
+ case 10000:
+{
+      QFile file4("10000iterations_size"+QString::number(userMapSize)+"_"+QString::number(currentThreads)+"threads.png");
+      file4.open(QIODevice::WriteOnly);
+      pix2.scaled(400,400,Qt::IgnoreAspectRatio,Qt::FastTransformation).save(&file4,"PNG");
+      file4.close();
+     break;
+}
+            default:
+            break;
+    }
+
+
 }
 //qDebug()<<count;
 
@@ -314,8 +365,8 @@ count++;
 
 //increment age of all blocks
 
-for(int i=0; i<mapSize;i++){
-    for(int j = 0; j<mapSize;j++){
+for(int i=0; i<userMapSize;i++){
+    for(int j = 0; j<userMapSize;j++){
         blockArray[i][j].blockAge ++;
     }
 }
@@ -324,13 +375,14 @@ QThread::msleep(frameRate);
 //display elapsed time
 int timeInMs = runTime.elapsed();
 ui->lcdNumber_6->display(QString::number(timeInMs));
-
+iterationsTest = ui->IterationsSpinBox->value();
 if(ui->radioButton_3->isChecked() && runs <=5&&threadNumber<=4){
 
     ui->spinBox->setValue(threadNumber);
-    if(count==500){
+    if(count==iterationsTest){
         ui->lcdNumber_7->display(QString::number(timeInMs));
-        speedData<<500<<","<<ui->lcdNumber_6->value()<<","<<ui->spinBox->value()<<","<<ui->radioButton->isChecked()<<std::endl;
+        //speedData << "No of iterations,"<<"time taken,"<<"number of cores,"<<"visuals"<<"map size"<<std::endl;
+        speedData<<iterationsTest<<","<<ui->lcdNumber_6->value()<<","<<ui->spinBox->value()<<","<<ui->radioButton->isChecked()<<userMapSize<<std::endl;
         ui->textBrowser_3->append(QString::number(ui->lcdNumber_6->value()));
          ui->textBrowser->append(QString::number(currentThreads));
          ui->textBrowser->append(QString::number(threadNumber));
@@ -346,7 +398,7 @@ if(ui->radioButton_3->isChecked() && runs <=5&&threadNumber<=4){
         runs=0;
 
     }
-    if(threadNumber==5){
+    if(threadNumber==MaxthreadNumber+1){
         ui->textBrowser_4->setText("finished speed test");
         speedData.close();
     }
@@ -357,6 +409,7 @@ void MainWindow::on_pushButton_clicked()
 {
     //start timer
     //const double startTime = omp_get_wtime();
+    userMapSize = ui->gridSizeSpinBox->value();
     int numberOfThreads = ui->spinBox->value();
     omp_set_num_threads(numberOfThreads);
     runTime.start();
@@ -380,26 +433,26 @@ void MainWindow::on_pushButton_clicked()
     int randArray[mapSize][mapSize];
     int arrayCount =0;
     int iRand,jRand, temp;
-    int startingFish = (mapSize*mapSize)*(fishPercent/100.0);
-    int startingShark = ((mapSize*mapSize)*(sharkPercent/100.0));
-    int totalGridSize = mapSize*mapSize;
+    int startingFish = (userMapSize*userMapSize)*(fishPercent/100.0);
+    int startingShark = ((userMapSize*userMapSize)*(sharkPercent/100.0));
+    int totalGridSize = userMapSize*userMapSize;
       int a[mapSize][mapSize];
   if(ui->radioButton_3->isChecked()){
 
 
     //create an array with values 1 to 100
-    for(int i=0;i<mapSize;i++){
-       for(int j=0; j<mapSize;j++){
+    for(int i=0;i<userMapSize;i++){
+       for(int j=0; j<userMapSize;j++){
            randArray[i][j] = arrayCount;
            arrayCount++;
        }
        arrayCount++;
     }
     //swap array values randomly
-    for(int i=0;i<mapSize;i++){
-       for(int j=0; j<mapSize;j++){
-           iRand = rand() % mapSize;
-           jRand = rand() % mapSize;
+    for(int i=0;i<userMapSize;i++){
+       for(int j=0; j<userMapSize;j++){
+           iRand = rand() % userMapSize;
+           jRand = rand() % userMapSize;
            temp =  randArray[i][j];
           randArray[i][j] = randArray[iRand][jRand];
           randArray[iRand][jRand]=temp;
@@ -408,17 +461,10 @@ void MainWindow::on_pushButton_clicked()
 
     }
 
-//    for(int i=0;i<mapSize;i++){
-//       for(int j=0; j<mapSize;j++){
-//          randArray[i][j] = rand() %100;
-
-//       }
-
-//    }
 
 
-    for (int i =0; i<mapSize;++i){
-        for(int j=0; j<mapSize; ++j){
+    for (int i =0; i<userMapSize;++i){
+        for(int j=0; j<userMapSize; ++j){
 
 
             if(randArray[i][j] >totalGridSize -startingFish){
@@ -445,8 +491,8 @@ void MainWindow::on_pushButton_clicked()
     else{
         ui->textBrowser_2->append(QString::number((std::rand()&100)));
        int arrayPlace = 0;
-        for(int i=0;i<mapSize;i++){
-            for(int j=0;j<mapSize;j++){
+        for(int i=0;i<userMapSize;i++){
+            for(int j=0;j<userMapSize;j++){
                 if(arrayPlace > totalGridSize - startingFish ){
                     blockArray[i][j].setFish();
                     numberOfFish++;
