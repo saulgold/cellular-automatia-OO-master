@@ -45,8 +45,8 @@ MainWindow::MainWindow(QWidget *parent) :
     qDebug()<< ID;
 
     //initialise bolckArrayNExt as all dead
-    for (int i = 0; i < 3*mapSize; ++i){
-        for (int j = 0; j < 3*mapSize; ++j){
+    for (int i = 0; i < 3*userMapSize; ++i){
+        for (int j = 0; j < 3*userMapSize; ++j){
 
             blockArrayNext[i][j].setDead();
         }
@@ -156,7 +156,7 @@ omp_set_num_threads(threadNumber);
     for (int i = 2*userMapSize; i < 3*userMapSize; ++i){
         for (int j = 2*userMapSize; j < 3*userMapSize; ++j){
 
-            blockGhostArray[i][j]=blockArray[i-2*userMapSize][j-2*mapSize];
+            blockGhostArray[i][j]=blockArray[i-2*userMapSize][j-2*userMapSize];
         }
     }
     //10-2*mapSize, 10-2*mapSize
@@ -342,7 +342,7 @@ if(ui->radioButton->isChecked()){
              file3.close();
             break;
  }
- case 10000:
+        case 10000:
 {
       QFile file4("10000iterations_size"+QString::number(userMapSize)+"_"+QString::number(currentThreads)+"threads.png");
       file4.open(QIODevice::WriteOnly);
@@ -378,7 +378,7 @@ ui->lcdNumber_6->display(QString::number(timeInMs));
 iterationsTest = ui->IterationsSpinBox->value();
 if(ui->radioButton_3->isChecked() && runs <=5&&threadNumber<=4){
 
-    ui->spinBox->setValue(threadNumber);
+
     if(count==iterationsTest){
         ui->lcdNumber_7->display(QString::number(timeInMs));
         //speedData << "No of iterations,"<<"time taken,"<<"number of cores,"<<"visuals"<<"map size"<<std::endl;
@@ -386,21 +386,38 @@ if(ui->radioButton_3->isChecked() && runs <=5&&threadNumber<=4){
         ui->textBrowser_3->append(QString::number(ui->lcdNumber_6->value()));
          ui->textBrowser->append(QString::number(currentThreads));
          ui->textBrowser->append(QString::number(threadNumber));
+         ui->textBrowser_4->append("mapsize: "+QString::number(userMapSize));
         runs++;
         count =0;
         ui->pushButton->clicked();
 
 
         }
+    //change map size
+    if(threadNumber==MaxthreadNumber+1 &&runs >2){
+        userMapSize = userMapSize*2;
+        ui->gridSizeSpinBox->setValue(userMapSize);
+    }
+    //reset runs
     if(runs>2){
 
         threadNumber++;
         runs=0;
 
     }
+//reset threads
     if(threadNumber==MaxthreadNumber+1){
-        ui->textBrowser_4->setText("finished speed test");
+        ui->textBrowser_4->setText("finished speed test with mapsize: "+QString::number(userMapSize/2));
+        threadNumber =1;
+
+
+        //speedData.close();
+    }
+
+    if(userMapSize>=1000){
         speedData.close();
+        ui->textBrowser_4->setText("testing finished");
+        userMapSize = 0;
     }
     }
 }
