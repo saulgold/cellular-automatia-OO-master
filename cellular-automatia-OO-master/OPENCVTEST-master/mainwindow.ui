@@ -383,6 +383,9 @@
     <property name="text">
      <string>Visuals on</string>
     </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
     <property name="autoExclusive">
      <bool>false</bool>
     </property>
@@ -399,6 +402,9 @@
     <property name="text">
      <string>Speed Test</string>
     </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
     <property name="autoExclusive">
      <bool>false</bool>
     </property>
@@ -414,6 +420,9 @@
     </property>
     <property name="text">
      <string>Random initialisation</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
     </property>
     <property name="autoExclusive">
      <bool>false</bool>

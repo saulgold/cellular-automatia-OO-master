@@ -24,8 +24,14 @@ cv::Mat  frame2;
 int const mapSize = 1000;
 QTime runTime;
 block blockArray[mapSize][mapSize];
-block blockArrayNext[3*mapSize][3*mapSize];
-block blockGhostArray[3*mapSize][3*mapSize];
+block blockArrayNext[mapSize][mapSize];
+block blockGhostArray[mapSize][mapSize];
+
+block oldArray[mapSize][mapSize];
+
+//mpi arrays
+//block oldM
+//
 int fishPercent = 50;
 int sharkPercent = 25;
 int frameRate = 0;
@@ -33,10 +39,12 @@ int threadNumber=1;
 int currentThreads;
 int iterationsTest;
 int userMapSize;
-
+//mpi  variables
 int world_rank;
+int world_size;
 char processor_name[MPI_MAX_PROCESSOR_NAME];
     int name_len;
+MPI_Status status;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -44,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
 MPI_Init(NULL,NULL);
 //int world_size;
-//MPI_Comm_size(MPI_COMM_WORLD,&world_size);
+MPI_Comm_size(MPI_COMM_WORLD,&world_size);
 
 MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 MPI_Get_processor_name(processor_name, &name_len);
@@ -84,9 +92,11 @@ MainWindow::~MainWindow()
 
 void MainWindow::updateGUI(){
 
-    ui->textBrowser_2->append(QString::number(world_rank));
+    ui->textBrowser_2->append("rank: "+QString::number(world_rank));
      ui->textBrowser_2->append(processor_name);
-    ui->lcdNumber->setPalette(QColor(200,124,130));
+     ui->textBrowser_2->append("size: " +QString::number(world_size));
+
+     ui->lcdNumber->setPalette(QColor(200,124,130));
     ui->lcdNumber_2->setPalette(QColor(100,0,100));
     ui->lcdNumber_3->setPalette(Qt::black);
     ui->lcdNumber_4->setPalette(Qt::black);
@@ -112,124 +122,162 @@ void MainWindow::updateGUI(){
     omp_set_num_threads(threadNumber);
 #pragma omp parallel num_threads(threadNumber)
     {
-
-
+//        for(int i =1;i<userMapSize+1;i++){
+//            for(int j=1;j<userMapSize+1;j++){
+//                oldArray[i][j]=blockArray[i-1][j-1];
+//            }
+//        }
 
         currentThreads = omp_get_num_threads();
+   //for(int n=0;n<userMapSize;n++){
+       //go from1 to mapsize/ number of processors
+       //without doing the left edge
+       //so iteration through first quarter of grid if there are 4 procs
+       for(int i=1;i<(userMapSize/world_size)+1;i++){
+           //copying left column to right column -1
+           //note that array now starts at 1 and not 0
+            oldArray[i][0]=oldArray[i][userMapSize];
+       //copying first columnt to right column +0
+            oldArray[i][userMapSize+1]=oldArray[i][1];
+   }
+   //if numbber of processes is only 1 dont send anything with mpi
+   if(world_size==1){
+        for(int j = 1; j< (userMapSize+1);j++){
+            //top row - 1 = bottom row
 
-
-#pragma omp for
-
-        for (int i = 0; i < userMapSize; ++i){
-            for (int j = 0; j < userMapSize; ++j){
-
-                blockGhostArray[i][j]=blockArray[i][j];
-            }
+            oldArray[0][j]=oldArray[userMapSize/world_size][j];
+           //bottom row +1 = top row
+            oldArray[userMapSize/world_size +1][j]=oldArray[1][j];
         }
 
-        //10-2*mapSize, 0-10
-#pragma omp for
-        for (int i = userMapSize; i < 2*userMapSize; ++i){
-            for (int j = 0; j < userMapSize; ++j){
+        //corners
+        oldArray[0][0] = oldArray[userMapSize][userMapSize];
+        oldArray[0][userMapSize+1]=oldArray[userMapSize][1];
+        oldArray[userMapSize+1][0]=oldArray[1][userMapSize];
+        oldArray[(userMapSize/world_size)+1][(userMapSize/world_size)+1];
 
-                blockGhostArray[i][j]=blockArray[i-userMapSize][j];
-            }
-        }
-        //0-3*mapSize, 0-10
-#pragma omp for
-        for (int i = userMapSize; i < 2*userMapSize; ++i){
-            for (int j = 0; j < userMapSize; ++j){
+   }
+//   for (int i = 0; i < userMapSize+2; ++i){
+//              for (int j = 0; j < userMapSize+2; ++j){
+//                  blockGhostArray[i][j]=oldArray[i][j];
+//              }
+//   }
 
-                blockGhostArray[i][j]=blockArray[i-userMapSize][j];
-            }
-        }
-        //2*mapSize-3*mapSize, 0-10
-#pragma omp for
-        for (int i = 2*userMapSize; i < 3*userMapSize; ++i){
-            for (int j = 0; j < userMapSize; ++j){
+        //goast array stuff
 
-                blockGhostArray[i][j]=blockArray[i-2*userMapSize][j];
-            }
-        }
-        //0-10, 10-2*mapSize
-#pragma omp for
-        for (int i = 0; i < userMapSize; ++i){
-            for (int j = userMapSize; j < 2*userMapSize; ++j){
+{
+//#pragma omp for
+//ghoast ARRAY stuff
+//        for (int i = 0; i < userMapSize; ++i){
+//            for (int j = 0; j < userMapSize; ++j){
 
-                blockGhostArray[i][j]=blockArray[i][j-userMapSize];
-            }
-        }
-        //0-10, 2*mapSize-3*mapSize
-#pragma omp for
-        for (int i = 0; i < userMapSize; ++i){
-            for (int j = 2*userMapSize; j < 3*userMapSize; ++j){
+//                blockGhostArray[i][j]=blockArray[i][j];
+//            }
+//        }
 
-                blockGhostArray[i][j]=blockArray[i][j-2*userMapSize];
-            }
-        }
-        //2*mapSize-3*mapSize, 2*mapSize-3*mapSize
-#pragma omp for
-        for (int i = 2*userMapSize; i < 3*userMapSize; ++i){
-            for (int j = 2*userMapSize; j < 3*userMapSize; ++j){
+//        //10-2*mapSize, 0-10
+//#pragma omp for
+//        for (int i = userMapSize; i < 2*userMapSize; ++i){
+//            for (int j = 0; j < userMapSize; ++j){
 
-                blockGhostArray[i][j]=blockArray[i-2*userMapSize][j-2*userMapSize];
-            }
-        }
-        //10-2*mapSize, 10-2*mapSize
-#pragma omp for
-        for (int i = userMapSize; i < 2*userMapSize; ++i){
-            for (int j = userMapSize; j < 2*userMapSize; ++j){
+//                blockGhostArray[i][j]=blockArray[i-userMapSize][j];
+//            }
+//        }
+//        //0-3*mapSize, 0-10
+//#pragma omp for
+//        for (int i = userMapSize; i < 2*userMapSize; ++i){
+//            for (int j = 0; j < userMapSize; ++j){
 
-                blockGhostArray[i][j]=blockArray[i-userMapSize][j-userMapSize];
-            }
+//                blockGhostArray[i][j]=blockArray[i-userMapSize][j];
+//            }
+//        }
+//        //2*mapSize-3*mapSize, 0-10
+////#pragma omp for
+//        for (int i = 2*userMapSize; i < 3*userMapSize; ++i){
+//            for (int j = 0; j < userMapSize; ++j){
 
-        }
-        //10-2*mapSize, 2*mapSize-3*mapSize
-#pragma omp for
-        for (int i = userMapSize; i < 2*userMapSize; ++i){
-            for (int j = 2*userMapSize; j < 3*userMapSize; ++j){
+//                blockGhostArray[i][j]=blockArray[i-2*userMapSize][j];
+//            }
+//        }
+//        //0-10, 10-2*mapSize
+////#pragma omp for
+//        for (int i = 0; i < userMapSize; ++i){
+//            for (int j = userMapSize; j < 2*userMapSize; ++j){
 
-                blockGhostArray[i][j]=blockArray[i-userMapSize][j-2*userMapSize];
-            }
+//                blockGhostArray[i][j]=blockArray[i][j-userMapSize];
+//            }
+//        }
+//        //0-10, 2*mapSize-3*mapSize
+////#pragma omp for
+//        for (int i = 0; i < userMapSize; ++i){
+//            for (int j = 2*userMapSize; j < 3*userMapSize; ++j){
 
-        }
-        //2*mapSize-3*mapSize, 2*mapSize-3*mapSize
-#pragma omp for
-        for (int i = 2*userMapSize; i < 3*userMapSize; ++i){
-            for (int j = 2*userMapSize; j < 3*userMapSize; ++j){
+//                blockGhostArray[i][j]=blockArray[i][j-2*userMapSize];
+//            }
+//        }
+//        //2*mapSize-3*mapSize, 2*mapSize-3*mapSize
+////#pragma omp for
+//        for (int i = 2*userMapSize; i < 3*userMapSize; ++i){
+//            for (int j = 2*userMapSize; j < 3*userMapSize; ++j){
 
-                blockGhostArray[i][j]=blockArray[i-2*userMapSize][j-2*userMapSize];
-            }
+//                blockGhostArray[i][j]=blockArray[i-2*userMapSize][j-2*userMapSize];
+//            }
+//        }
+//        //10-2*mapSize, 10-2*mapSize
+////#pragma omp for
+//        for (int i = userMapSize; i < 2*userMapSize; ++i){
+//            for (int j = userMapSize; j < 2*userMapSize; ++j){
 
-        }
-        //2*mapSize-3*mapSize, mapSize-2*mapSize
-#pragma omp for
-        for (int i = 2*userMapSize; i < 3*userMapSize; ++i){
-            for (int j = userMapSize; j < 2*userMapSize; ++j){
+//                blockGhostArray[i][j]=blockArray[i-userMapSize][j-userMapSize];
+//            }
 
-                blockGhostArray[i][j]=blockArray[i-2*userMapSize][j-userMapSize];
-            }
+//        }
+//        //10-2*mapSize, 2*mapSize-3*mapSize
+////#pragma omp for
+//        for (int i = userMapSize; i < 2*userMapSize; ++i){
+//            for (int j = 2*userMapSize; j < 3*userMapSize; ++j){
 
-        }
+//                blockGhostArray[i][j]=blockArray[i-userMapSize][j-2*userMapSize];
+//            }
+
+//        }
+//        //2*mapSize-3*mapSize, 2*mapSize-3*mapSize
+////#pragma omp for
+//        for (int i = 2*userMapSize; i < 3*userMapSize; ++i){
+//            for (int j = 2*userMapSize; j < 3*userMapSize; ++j){
+
+//                blockGhostArray[i][j]=blockArray[i-2*userMapSize][j-2*userMapSize];
+//            }
+
+//        }
+//        //2*mapSize-3*mapSize, mapSize-2*mapSize
+////#pragma omp for
+//        for (int i = 2*userMapSize; i < 3*userMapSize; ++i){
+//            for (int j = userMapSize; j < 2*userMapSize; ++j){
+
+//                blockGhostArray[i][j]=blockArray[i-2*userMapSize][j-userMapSize];
+//            }
+
+//        }
 
 
-
+}
 
         //apply rules
 
         int sharkNeighbours, fishNeighbours,fishOfBreedingAge,sharksOfBreedingAge;
 
-#pragma omp for
-        for (int i = userMapSize; i <2*userMapSize; ++i){
+//#pragma omp for
+        for (int i = 0; i <userMapSize+2; ++i){
 
-            for (int j = userMapSize; j <2*userMapSize; ++j){
-                sharkNeighbours =  blockGhostArray[i + 1][j].isShark + blockGhostArray[i][j + 1].isShark + blockGhostArray[i + 1][j + 1].isShark + blockGhostArray[i - 1][j - 1].isShark + blockGhostArray[i - 1][j].isShark + blockGhostArray[i][j - 1].isShark + blockGhostArray[i + 1][j - 1].isShark+blockGhostArray[i-1][j + 1].isShark;
-                fishNeighbours =  blockGhostArray[i + 1][j].isFish + blockGhostArray[i][j + 1].isFish + blockGhostArray[i + 1][j + 1].isFish + blockGhostArray[i - 1][j - 1].isFish + blockGhostArray[i - 1][j].isFish + blockGhostArray[i][j - 1].isFish + blockGhostArray[i + 1][j - 1].isFish+blockGhostArray[i-1][j + 1].isFish;
-                fishOfBreedingAge = blockGhostArray[i + 1][j].isFishOfBreedingAge() + blockGhostArray[i][j + 1].isFishOfBreedingAge() + blockGhostArray[i + 1][j + 1].isFishOfBreedingAge() + blockGhostArray[i - 1][j - 1].isFishOfBreedingAge() + blockGhostArray[i - 1][j].isFishOfBreedingAge() + blockGhostArray[i][j - 1].isFishOfBreedingAge() + blockGhostArray[i + 1][j - 1].isFishOfBreedingAge()+blockGhostArray[i-1][j + 1].isFishOfBreedingAge();
-                sharksOfBreedingAge =  blockGhostArray[i + 1][j].isSharkOfBreedingAge() + blockGhostArray[i][j + 1].isSharkOfBreedingAge() + blockGhostArray[i + 1][j + 1].isSharkOfBreedingAge() + blockGhostArray[i - 1][j - 1].isSharkOfBreedingAge() + blockGhostArray[i - 1][j].isSharkOfBreedingAge() + blockGhostArray[i][j - 1].isSharkOfBreedingAge() + blockGhostArray[i + 1][j - 1].isSharkOfBreedingAge()+blockGhostArray[i-1][j + 1].isSharkOfBreedingAge();
+            for (int j = 0; j <userMapSize+2; ++j){
+                sharkNeighbours =  oldArray[i + 1][j].isShark + oldArray[i][j + 1].isShark + oldArray[i + 1][j + 1].isShark + oldArray[i - 1][j - 1].isShark + oldArray[i - 1][j].isShark + oldArray[i][j - 1].isShark + oldArray[i + 1][j - 1].isShark+oldArray[i-1][j + 1].isShark;
+                fishNeighbours =  oldArray[i + 1][j].isFish + oldArray[i][j + 1].isFish + oldArray[i + 1][j + 1].isFish + oldArray[i - 1][j - 1].isFish + oldArray[i - 1][j].isFish + oldArray[i][j - 1].isFish + oldArray[i + 1][j - 1].isFish+oldArray[i-1][j + 1].isFish;
+                fishOfBreedingAge = oldArray[i + 1][j].isFishOfBreedingAge() + oldArray[i][j + 1].isFishOfBreedingAge() + oldArray[i + 1][j + 1].isFishOfBreedingAge() + oldArray[i - 1][j - 1].isFishOfBreedingAge() + oldArray[i - 1][j].isFishOfBreedingAge() + oldArray[i][j - 1].isFishOfBreedingAge() + oldArray[i + 1][j - 1].isFishOfBreedingAge()+oldArray[i-1][j + 1].isFishOfBreedingAge();
+                sharksOfBreedingAge =  oldArray[i + 1][j].isSharkOfBreedingAge() + oldArray[i][j + 1].isSharkOfBreedingAge() + oldArray[i + 1][j + 1].isSharkOfBreedingAge() + oldArray[i - 1][j - 1].isSharkOfBreedingAge() + oldArray[i - 1][j].isSharkOfBreedingAge() + oldArray[i][j - 1].isSharkOfBreedingAge() + oldArray[i + 1][j - 1].isSharkOfBreedingAge()+oldArray[i-1][j + 1].isSharkOfBreedingAge();
 
                 //fish rules
-                if(blockGhostArray[i][j].isFish==true){
+                if(oldArray[i][j].isFish==true){
                     if(sharkNeighbours>=5){
                         blockArrayNext[i][j].setDead();
                         numberOfFish--;
@@ -238,25 +286,25 @@ void MainWindow::updateGUI(){
                         blockArrayNext[i][j].setDead();
                         numberOfFish--;
                     }
-                    else if(blockGhostArray[i][j].blockAge>=10){
+                    else if(oldArray[i][j].blockAge>=10){
                         blockArrayNext[i][j].setDead();
                         numberOfFish--;
                     }
 
                     else{
-                        blockArrayNext[i][j] = blockGhostArray[i][j];
+                        blockArrayNext[i][j] = oldArray[i][j];
                     }
 
 
                 }
                 //shark rules
 
-                else if(blockGhostArray[i][j].isShark==true){
+                else if(oldArray[i][j].isShark==true){
                     if(sharkNeighbours>=6 && fishNeighbours==0){
                         blockArrayNext[i][j].setDead();
                         numberOfSharks--;
                     }
-                    else if(blockGhostArray[i][j].blockAge>=20){
+                    else if(oldArray[i][j].blockAge>=20){
                         blockArrayNext[i][j].setDead();
                         numberOfSharks--;
                     }
@@ -267,12 +315,12 @@ void MainWindow::updateGUI(){
                     }
 
                     else{
-                        blockArrayNext[i][j] = blockGhostArray[i][j];
+                        blockArrayNext[i][j] = oldArray[i][j];
                     }
 
                 }
                 //empty rules
-                else if(blockGhostArray[i][j].isDead==true){
+                else if(oldArray[i][j].isDead==true){
 
                     if(fishNeighbours>=4 && fishOfBreedingAge>=3 && sharkNeighbours<4){
                         blockArrayNext[i][j].setFish();
@@ -284,7 +332,7 @@ void MainWindow::updateGUI(){
 
                     }
                     else{
-                        blockArrayNext[i][j] = blockGhostArray[i][j];
+                        blockArrayNext[i][j] = oldArray[i][j];
                     }
                 }
 
@@ -293,19 +341,18 @@ void MainWindow::updateGUI(){
 
         }
         //display new array
-#pragma omp for
-        for (int i = userMapSize; i < 2*userMapSize; ++i){
+//#pragma omp for
+        for (int i = 1; i < userMapSize-1; ++i){
 
-            for (int j = userMapSize; j < 2*userMapSize; ++j){
+            for (int j = 1; j < userMapSize-1; ++j){
 
-                blockArray[i-userMapSize][j-userMapSize]=blockArrayNext[i][j];
-
+                oldArray[i][j]=blockArrayNext[i][j];
 
             }
 
         }
 
-    }
+
     //turn visuals on
     if(ui->radioButton->isChecked()){
         frame2 = cv::Mat(userMapSize, userMapSize, CV_8UC3, cv::Vec3b(0,0,0));
@@ -315,7 +362,7 @@ void MainWindow::updateGUI(){
         for (int i = 0; i < userMapSize; ++i){
             for (int j = 0; j < userMapSize; ++j){
 
-                frame2.at<cv::Vec3b>(cv::Point(j,i)) = blockArray[i][j].getColour();
+                frame2.at<cv::Vec3b>(cv::Point(j,i)) = oldArray[i][j].getColour();
             }
         }
 
@@ -323,52 +370,53 @@ void MainWindow::updateGUI(){
         QPixmap pix2 = QPixmap::fromImage(img2);
 
         ui->label_2->setPixmap(pix2.scaled(400, 400, Qt::IgnoreAspectRatio, Qt::FastTransformation));
+
         //save image after a certain iterations
 
-        switch(count){
-        case 0:
-        {
-            QFile file("0iterations_size"+QString::number(userMapSize)+"_"+QString::number(currentThreads)+"threads.png");
-            file.open(QIODevice::WriteOnly);
-            pix2.scaled(400,400,Qt::IgnoreAspectRatio,Qt::FastTransformation).save(&file,"PNG");
-            file.close();
-            break;
-        }
-        case 100:
-        {
-            QFile file1("100iterations_size"+QString::number(userMapSize)+"_"+QString::number(currentThreads)+"threads.png");
-            file1.open(QIODevice::WriteOnly);
-            pix2.scaled(400,400,Qt::IgnoreAspectRatio,Qt::FastTransformation).save(&file1,"PNG");
-            file1.close();
-            break;
-        }
-        case 500:
-        {
-            QFile file2("500iterations_size"+QString::number(userMapSize)+"_"+QString::number(currentThreads)+"threads.png");
-            file2.open(QIODevice::WriteOnly);
-            pix2.scaled(400,400,Qt::IgnoreAspectRatio,Qt::FastTransformation).save(&file2,"PNG");
-            file2.close();
-            break;
-        }
-        case 1000:
-        {
-            QFile file3("1000iterations_size"+QString::number(userMapSize)+"_"+QString::number(currentThreads)+"threads.png");
-            file3.open(QIODevice::WriteOnly);
-            pix2.scaled(400,400,Qt::IgnoreAspectRatio,Qt::FastTransformation).save(&file3,"PNG");
-            file3.close();
-            break;
-        }
-        case 10000:
-        {
-            QFile file4("10000iterations_size"+QString::number(userMapSize)+"_"+QString::number(currentThreads)+"threads.png");
-            file4.open(QIODevice::WriteOnly);
-            pix2.scaled(400,400,Qt::IgnoreAspectRatio,Qt::FastTransformation).save(&file4,"PNG");
-            file4.close();
-            break;
-        }
-        default:
-            break;
-        }
+//        switch(count){
+//        case 0:
+//        {
+//            QFile file("0iterations_size"+QString::number(userMapSize)+"_"+QString::number(currentThreads)+"threads.png");
+//            file.open(QIODevice::WriteOnly);
+//            pix2.scaled(400,400,Qt::IgnoreAspectRatio,Qt::FastTransformation).save(&file,"PNG");
+//            file.close();
+//            break;
+//        }
+//        case 100:
+//        {
+//            QFile file1("100iterations_size"+QString::number(userMapSize)+"_"+QString::number(currentThreads)+"threads.png");
+//            file1.open(QIODevice::WriteOnly);
+//            pix2.scaled(400,400,Qt::IgnoreAspectRatio,Qt::FastTransformation).save(&file1,"PNG");
+//            file1.close();
+//            break;
+//        }
+//        case 500:
+//        {
+//            QFile file2("500iterations_size"+QString::number(userMapSize)+"_"+QString::number(currentThreads)+"threads.png");
+//            file2.open(QIODevice::WriteOnly);
+//            pix2.scaled(400,400,Qt::IgnoreAspectRatio,Qt::FastTransformation).save(&file2,"PNG");
+//            file2.close();
+//            break;
+//        }
+//        case 1000:
+//        {
+//            QFile file3("1000iterations_size"+QString::number(userMapSize)+"_"+QString::number(currentThreads)+"threads.png");
+//            file3.open(QIODevice::WriteOnly);
+//            pix2.scaled(400,400,Qt::IgnoreAspectRatio,Qt::FastTransformation).save(&file3,"PNG");
+//            file3.close();
+//            break;
+//        }
+//        case 10000:
+//        {
+//            QFile file4("10000iterations_size"+QString::number(userMapSize)+"_"+QString::number(currentThreads)+"threads.png");
+//            file4.open(QIODevice::WriteOnly);
+//            pix2.scaled(400,400,Qt::IgnoreAspectRatio,Qt::FastTransformation).save(&file4,"PNG");
+//            file4.close();
+//            break;
+//        }
+//        default:
+//            break;
+//        }
 
 
     }
@@ -381,9 +429,9 @@ void MainWindow::updateGUI(){
 
     //increment age of all blocks
 
-    for(int i=0; i<userMapSize;i++){
-        for(int j = 0; j<userMapSize;j++){
-            blockArray[i][j].blockAge ++;
+    for(int i=1; i<userMapSize+1;i++){
+        for(int j = 1; j<userMapSize+1;j++){
+            oldArray[i][j].blockAge ++;
         }
     }
 
@@ -435,9 +483,10 @@ void MainWindow::updateGUI(){
             ui->textBrowser_4->setText("testing finished");
             userMapSize = 0;
         }
-    }
-}
 
+}
+}
+}
 void MainWindow::on_pushButton_clicked()
 {
     //start timer
@@ -474,16 +523,16 @@ void MainWindow::on_pushButton_clicked()
 
 
         //create an array with values 1 to 100
-        for(int i=0;i<userMapSize;i++){
-            for(int j=0; j<userMapSize;j++){
+        for(int i=1;i<userMapSize+1;i++){
+            for(int j=1; j<userMapSize+1;j++){
                 randArray[i][j] = arrayCount;
                 arrayCount++;
             }
             arrayCount++;
         }
         //swap array values randomly
-        for(int i=0;i<userMapSize;i++){
-            for(int j=0; j<userMapSize;j++){
+        for(int i=1;i<userMapSize+1;i++){
+            for(int j=1; j<userMapSize+1;j++){
                 iRand = rand() % userMapSize;
                 jRand = rand() % userMapSize;
                 temp =  randArray[i][j];
@@ -496,24 +545,24 @@ void MainWindow::on_pushButton_clicked()
 
 
 
-        for (int i =0; i<userMapSize;++i){
-            for(int j=0; j<userMapSize; ++j){
+        for (int i =1; i<userMapSize+1;++i){
+            for(int j=1; j<userMapSize+1; ++j){
 
 
                 if(randArray[i][j] >totalGridSize -startingFish){
 
-                    blockArray[i][j].setFish();
+                    oldArray[i][j].setFish();
                     a[i][j]=1;
                     numberOfFish++;
                 }
                 else if(randArray[i][j]<startingShark){
-                    blockArray[i][j].setShark();
+                    oldArray[i][j].setShark();
                     numberOfSharks++;
                     a[i][j]=2;
 
                 }
                 else{
-                    blockArray[i][j].setDead();
+                    oldArray[i][j].setDead();
                     a[i][j]=0;
                 }
             }
@@ -524,18 +573,18 @@ void MainWindow::on_pushButton_clicked()
     else{
         ui->textBrowser_2->append(QString::number((std::rand()&100)));
         int arrayPlace = 0;
-        for(int i=0;i<userMapSize;i++){
-            for(int j=0;j<userMapSize;j++){
+        for(int i=1;i<userMapSize+1;i++){
+            for(int j=1;j<userMapSize+1;j++){
                 if(arrayPlace > totalGridSize - startingFish ){
-                    blockArray[i][j].setFish();
+                    oldArray[i][j].setFish();
                     numberOfFish++;
                 }
                 else if(arrayPlace < startingShark){
-                    blockArray[i][j].setShark();
+                    oldArray[i][j].setShark();
                     numberOfSharks++;
                 }
                 else{
-                    blockArray[i][j].setDead();
+                    oldArray[i][j].setDead();
                 }
                 arrayPlace++;
             }
@@ -545,9 +594,5 @@ void MainWindow::on_pushButton_clicked()
     }
 
 }
-
-
-
-
 
 
